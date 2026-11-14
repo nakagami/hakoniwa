@@ -297,9 +297,11 @@ func runInNamespace(uid, gid int, home, shell, username, cwd string) {
 	}
 
 	// Setup prompt to show (hakoniwa) in command prompt
-	_ = os.WriteFile("/etc/debian_chroot", []byte("hakoniwa\n"), 0644)
-	promptSnippet := `if [ -n "$PS1" ] && [ "${PS1#*(hakoniwa)}" = "$PS1" ] && [ "${PS1#*debian_chroot}" = "$PS1" ]; then
-    PS1="(hakoniwa) $PS1"
+	promptSnippet := `if [ -n "$PS1" ]; then
+    case "$PS1" in
+        *"(hakoniwa)"*) ;;
+        *) PS1="(hakoniwa) $PS1" ;;
+    esac
 fi
 `
 	_ = os.WriteFile("/etc/profile.d/hakoniwa.sh", []byte(promptSnippet), 0644)
@@ -356,7 +358,6 @@ fi
 	}
 	os.Setenv("SHELL", shell)
 	os.Setenv("HAKONIWA", "1")
-	os.Setenv("debian_chroot", "hakoniwa")
 
 	// Prohibit chroot syscall using seccomp BPF filter
 	if err := disableChroot(); err != nil {
