@@ -130,8 +130,10 @@ func main() {
 	flag.StringVar(&origCWD, "cwd", "", "original CWD")
 	flag.Parse()
 
+	cmdArgs := flag.Args()
+
 	if initMode {
-		runInNamespace(origUID, origGID, origHome, origShell, origUser, origCWD)
+		runInNamespace(origUID, origGID, origHome, origShell, origUser, origCWD, cmdArgs)
 		return
 	}
 
@@ -171,6 +173,10 @@ func main() {
 			"-user", uName,
 			"-cwd", cwd,
 		}
+		if len(cmdArgs) > 0 {
+			args = append(args, "--")
+			args = append(args, cmdArgs...)
+		}
 
 		cmd := exec.Command("sudo", args...)
 		cmd.Stdin = os.Stdin
@@ -201,6 +207,10 @@ func main() {
 		"-user", origUser,
 		"-cwd", origCWD,
 	}
+	if len(cmdArgs) > 0 {
+		childArgs = append(childArgs, "--")
+		childArgs = append(childArgs, cmdArgs...)
+	}
 
 	cmd := exec.Command(exe, childArgs...)
 	cmd.Stdin = os.Stdin
@@ -218,7 +228,7 @@ func main() {
 	}
 }
 
-func runInNamespace(uid, gid int, home, shell, username, cwd string) {
+func runInNamespace(uid, gid int, home, shell, username, cwd string, cmdArgs []string) {
 	// Make all mounts private to prevent host namespace pollution
 	if err := syscall.Mount("", "/", "", syscall.MS_REC|syscall.MS_PRIVATE, ""); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to make / private: %v\n", err)
@@ -365,13 +375,18 @@ fi
 		os.Exit(1)
 	}
 
-	// Launch login shell
-	shellCmd := exec.Command(shell, "-l")
-	shellCmd.Stdin = os.Stdin
-	shellCmd.Stdout = os.Stdout
-	shellCmd.Stderr = os.Stderr
+	var targetCmd *exec.Cmd
+	if len(cmdArgs) > 0 {
+		targetCmd = exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	} else {
+		// Launch login shell
+		targetCmd = exec.Command(shell, "-l")
+	}
+	targetCmd.Stdin = os.Stdin
+	targetCmd.Stdout = os.Stdout
+	targetCmd.Stderr = os.Stderr
 
-	if err := shellCmd.Run(); err != nil {
+	if err := targetCmd.Run(); err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			os.Exit(exitErr.ExitCode())
 		}

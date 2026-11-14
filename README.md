@@ -24,7 +24,11 @@ Make sure `$GOPATH/bin` (or `~/go/bin`) is included in your `$PATH`.
 
 ## Usage
 ```bash
+# Launch interactive login shell inside sandbox
 hakoniwa
+
+# Run a specific command inside sandbox and exit
+hakoniwa <command> [args...]
 ```
 
 > **Note**: Requires `sudo` privileges upon launch to configure the mount namespace and OverlayFS. Once initialized, privileges are immediately and automatically dropped back to your original user.
