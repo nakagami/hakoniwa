@@ -10,14 +10,21 @@ A lightweight, ephemeral sandbox environment tool that allows you to safely test
 - **Disables `chroot` Syscall**: Uses a seccomp BPF filter to block `chroot` system calls (`EPERM`) inside the sandbox.
 - **Clean Exit with Ctrl + D**: Exiting the shell discards all changes from memory and cleanly returns you to your original host environment.
 
-## Build
+## Installation
 ```bash
-go build -o hakoniwa .
+go install github.com/nakagami/hakoniwa@latest
 ```
+
+Or install from the local source directory:
+```bash
+go install .
+```
+
+Make sure `$GOPATH/bin` (or `~/go/bin`) is included in your `$PATH`.
 
 ## Usage
 ```bash
-./hakoniwa
+hakoniwa
 ```
 
 > **Note**: Requires `sudo` privileges upon launch to configure the mount namespace and OverlayFS. Once initialized, privileges are immediately and automatically dropped back to your original user.
